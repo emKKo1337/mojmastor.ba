@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { StarRating } from "@/components/ui/StarRating";
 import type { Craftsman } from "@/types";
@@ -71,9 +72,7 @@ export function CraftsmanListingCard({ craftsman }: { craftsman: Craftsman }) {
 
       <div className="mt-4 flex flex-wrap gap-2">
         {craftsman.tags.map((tag) => (
-          <span key={tag} className="rounded-full bg-surface-container-low px-3 py-1 text-label-sm text-text-muted">
-            {tag}
-          </span>
+          <Chip key={tag}>{tag}</Chip>
         ))}
       </div>
 

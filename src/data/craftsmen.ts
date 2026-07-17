@@ -25,7 +25,7 @@ export const craftsmen: Craftsman[] = [
     verified: true,
     availability: "available",
     tags: ["Hitne intervencije", "20+ god. iskustva"],
-    skills: ["Vodovod", "Kanalizacija", "Keramika", "Sanitarije", "Grijanje"],
+    skills: ["Vodoinstalacije", "Odštopavanje odvoda", "Zamjena slavina", "Adaptacije kupatila", "Postavljanje keramike"],
     gallery: [
       { src: "/images/gallery/kupatilo-1.jpg", caption: "Renovacija kupatila - Centar" },
       { src: "/images/gallery/keramika-1.jpg", caption: "Keramičarski radovi - kuhinja" },
