@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/Button";
 import { categories } from "@/data/categories";
 import { testimonials } from "@/data/testimonials";
 
+/** The homepage only teases a handful of categories; /kategorije lists the full catalogue. */
+const FEATURED_CATEGORY_COUNT = 14;
+
 export default function HomePage() {
   return (
     <>
@@ -73,7 +76,7 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7">
-              {categories.map((category) => (
+              {categories.slice(0, FEATURED_CATEGORY_COUNT).map((category) => (
                 <CategoryCard key={category.slug} category={category} />
               ))}
             </div>

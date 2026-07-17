@@ -21,7 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
     })),
     ...categories.map((category) => ({
-      url: `${base}/pretraga?kategorija=${category.slug}`,
+      url: `${base}/kategorije/${category.slug}`,
       lastModified: now,
     })),
     ...craftsmen.map((craftsman) => ({

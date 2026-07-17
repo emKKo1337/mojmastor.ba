@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import { categories } from "@/data/categories";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -19,10 +20,7 @@ export const metadata: Metadata = {
     "MojMajstor.ba povezuje korisnike sa provjerenim majstorima i servisnim profesionalcima širom Bosne i Hercegovine. Sigurno, brzo i pouzdano.",
   keywords: [
     "majstori",
-    "vodoinstalater",
-    "električar",
-    "moler",
-    "keramičar",
+    ...categories.slice(0, 8).map((category) => category.name.toLowerCase()),
     "Bosna i Hercegovina",
     "kućne usluge",
   ],
