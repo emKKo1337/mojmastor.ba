@@ -13,7 +13,7 @@ interface RegistracijaPageProps {
 
 export default async function RegistracijaPage({ searchParams }: RegistracijaPageProps) {
   const { tip } = await searchParams;
-  const defaultRole = tip === "majstor" ? "craftsman" : "customer";
+  const defaultRole = tip === "majstor" ? "majstor" : "korisnik";
 
   return (
     <AuthShell>

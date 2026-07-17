@@ -1,39 +1,39 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { Button } from "@/components/ui/Button";
 import { FieldError, Label, TextField } from "@/components/ui/form";
+import { PasswordRequirementsList } from "@/components/sections/PasswordRequirementsList";
 import { createClient } from "@/lib/supabase/client";
 import { translateAuthError } from "@/lib/auth/errors";
-import { validateEmail, validateRequired } from "@/lib/validation";
+import { validatePassword, validatePasswordConfirmation } from "@/lib/validation";
 
-export function LoginForm() {
+export function ResetPasswordForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
 
-    const nextEmailError = validateEmail(email);
-    const nextPasswordError = validateRequired(password, "Lozinka");
-    setEmailError(nextEmailError);
+    const nextPasswordError = validatePassword(password);
+    const nextConfirmError = validatePasswordConfirmation(password, confirmPassword);
     setPasswordError(nextPasswordError);
-    if (nextEmailError || nextPasswordError) return;
+    setConfirmError(nextConfirmError);
+    if (nextPasswordError || nextConfirmError) return;
 
     setSubmitting(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    const { error } = await supabase.auth.updateUser({ password });
     setSubmitting(false);
 
     if (error) {
@@ -41,16 +41,30 @@ export function LoginForm() {
       return;
     }
 
-    const redirectTo = searchParams.get("redirect") || "/";
-    router.push(redirectTo);
-    router.refresh();
+    setSuccess(true);
+    window.setTimeout(() => {
+      router.push("/");
+      router.refresh();
+    }, 2000);
+  }
+
+  if (success) {
+    return (
+      <div className="text-center">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10 text-secondary">
+          <MaterialIcon name="check_circle" filled className="text-4xl" />
+        </div>
+        <h2 className="mb-3 text-headline-lg font-bold text-text-main">Lozinka je promijenjena</h2>
+        <p className="text-body-md text-text-muted">Preusmjeravamo vas na početnu stranicu...</p>
+      </div>
+    );
   }
 
   return (
     <>
-      <div className="mb-10 hidden lg:block">
-        <h2 className="text-headline-lg font-bold text-text-main">Prijavite se</h2>
-        <p className="mt-2 text-body-md text-text-muted">Unesite svoje podatke za pristup profilu.</p>
+      <div className="mb-8">
+        <h2 className="text-headline-lg font-bold text-text-main">Postavite novu lozinku</h2>
+        <p className="mt-2 text-body-md text-text-muted">Unesite novu lozinku za svoj MojMajstor.ba račun.</p>
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
@@ -65,30 +79,7 @@ export function LoginForm() {
         ) : null}
 
         <div>
-          <Label htmlFor="email">Email</Label>
-          <TextField
-            id="email"
-            name="email"
-            type="email"
-            icon="mail"
-            placeholder="vasa@email.com"
-            autoComplete="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            invalid={!!emailError}
-          />
-          <FieldError>{emailError}</FieldError>
-        </div>
-
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <Label htmlFor="password" className="mb-0">
-              Lozinka
-            </Label>
-            <Link href="/zaboravljena-lozinka" className="text-label-sm text-primary hover:underline">
-              Zaboravili ste lozinku?
-            </Link>
-          </div>
+          <Label htmlFor="password">Nova lozinka</Label>
           <div className="relative">
             <TextField
               id="password"
@@ -96,7 +87,7 @@ export function LoginForm() {
               type={showPassword ? "text" : "password"}
               icon="lock"
               placeholder="••••••••"
-              autoComplete="current-password"
+              autoComplete="new-password"
               className="pr-12"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -111,32 +102,40 @@ export function LoginForm() {
               <MaterialIcon name={showPassword ? "visibility_off" : "visibility"} />
             </button>
           </div>
+          {password ? <PasswordRequirementsList password={password} /> : null}
           <FieldError>{passwordError}</FieldError>
+        </div>
+
+        <div>
+          <Label htmlFor="confirmPassword">Potvrdi novu lozinku</Label>
+          <TextField
+            id="confirmPassword"
+            name="confirmPassword"
+            type={showPassword ? "text" : "password"}
+            icon="lock"
+            placeholder="••••••••"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            invalid={!!confirmError}
+          />
+          <FieldError>{confirmError}</FieldError>
         </div>
 
         <Button type="submit" size="lg" fullWidth disabled={submitting} className="group">
           {submitting ? (
             <>
               <MaterialIcon name="progress_activity" className="animate-spin" />
-              Prijavljivanje...
+              Spremanje...
             </>
           ) : (
             <>
-              Prijavi se
+              Postavi novu lozinku
               <MaterialIcon name="arrow_forward" className="transition-transform group-hover:translate-x-1" />
             </>
           )}
         </Button>
       </form>
-
-      <div className="mt-12 text-center">
-        <p className="text-body-md text-text-muted">
-          Nemate korisnički račun?{" "}
-          <Link href="/registracija" className="ml-1 font-bold text-primary hover:underline">
-            Registruj se
-          </Link>
-        </p>
-      </div>
     </>
   );
 }

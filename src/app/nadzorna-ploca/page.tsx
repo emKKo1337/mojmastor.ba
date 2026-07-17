@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -8,6 +9,7 @@ import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { customerMobileNav, customerSidebarLinks } from "@/data/navigation";
 import { customerActivity, recommendedForCustomer } from "@/data/activity";
 import { getCraftsmanById } from "@/data/craftsmen";
+import { getAuthenticatedUser } from "@/lib/auth/session";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -22,7 +24,11 @@ const toneClasses = {
   neutral: "bg-surface-container-highest text-text-muted",
 } as const;
 
-export default function NadzornaPlocaPage() {
+export default async function NadzornaPlocaPage() {
+  const authenticatedUser = await getAuthenticatedUser();
+  if (!authenticatedUser) redirect("/prijava?redirect=/nadzorna-ploca");
+  const { profile } = authenticatedUser;
+
   const recommended = recommendedForCustomer
     .map((entry) => ({ craftsman: getCraftsmanById(entry.craftsmanId), note: entry.note }))
     .filter((entry): entry is { craftsman: NonNullable<typeof entry.craftsman>; note: string } => Boolean(entry.craftsman));
@@ -31,13 +37,17 @@ export default function NadzornaPlocaPage() {
     <>
       <DashboardSidebar
         links={customerSidebarLinks}
-        user={{ name: "Haris K.", roleLabel: "Korisnik", avatarUrl: "/images/avatars/haris-korisnik.jpg" }}
+        user={{
+          name: `${profile.firstName} ${profile.lastName}`.trim(),
+          roleLabel: "Korisnik",
+          avatarUrl: profile.avatarUrl || "/images/avatars/haris-korisnik.jpg",
+        }}
       />
 
       <main className="min-h-screen pb-24 md:ml-64 md:pb-0">
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between bg-surface-white/80 px-6 backdrop-blur-md md:px-margin-desktop">
           <div>
-            <h1 className="text-headline-md text-text-main">Zdravo, Harise! 👋</h1>
+            <h1 className="text-headline-md text-text-main">Zdravo, {profile.firstName}! 👋</h1>
             <p className="text-sm text-text-muted">Dobrodošli nazad na vašu MojMajstor.ba platformu.</p>
           </div>
           <div className="flex items-center space-x-4">

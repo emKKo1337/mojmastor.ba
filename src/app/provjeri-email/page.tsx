@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthShell } from "@/components/layout/AuthShell";
-import { LoginForm } from "@/components/sections/LoginForm";
+import { CheckEmailNotice } from "@/components/sections/CheckEmailNotice";
 
 export const metadata: Metadata = {
-  title: "Prijava",
-  description: "Prijavite se na svoj MojMajstor.ba račun i nastavite tamo gdje ste stali.",
+  title: "Potvrdite email",
+  robots: { index: false, follow: false },
 };
 
-export default function PrijavaPage() {
+export default function ProvjeriEmailPage() {
   return (
     <AuthShell>
       <Suspense>
-        <LoginForm />
+        <CheckEmailNotice />
       </Suspense>
     </AuthShell>
   );

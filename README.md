@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MojMajstor.ba
 
-## Getting Started
+Marketplace platform connecting korisnici (customers) with majstori (craftsmen) across Bosnia and Herzegovina. Built with Next.js 16 (App Router), TypeScript, Tailwind CSS v4, and Supabase (Auth, Postgres, Storage).
 
-First, run the development server:
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Without Supabase credentials configured, the app runs fully in signed-out mode — public marketplace pages work, and auth-only pages redirect to `/prijava`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Connecting Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The app is already wired for Supabase; it just needs a project and its credentials.
 
-## Learn More
+1. **Create a project** at [supabase.com](https://supabase.com).
+2. **Run the migration** in `supabase/migrations/20260717120000_init_schema.sql` against your project (via the SQL Editor, or `supabase db push` if using the Supabase CLI). It creates the `profiles`, `craftsman_profiles`, `craftsman_gallery`, and `favourites` tables with Row Level Security policies, the `handle_new_user` trigger that provisions a profile on signup, and the public `craftsman-gallery` Storage bucket.
+3. **Copy `.env.example` to `.env.local`** and fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from Project Settings → API. Set `NEXT_PUBLIC_SITE_URL` to your deployed URL in production.
+4. **Configure email templates** (Authentication → Email Templates in the Supabase dashboard) so confirmation and password-reset links point at this app's confirmation route instead of Supabase's default:
+   - **Confirm signup** template: set the link to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`
+   - **Reset password** template: set the link to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`
 
-To learn more about Next.js, take a look at the following resources:
+Once these are set, registration, login, email verification, password reset, and the majstor profile/gallery editor all work end-to-end. No `SUPABASE_SERVICE_ROLE_KEY` is needed — every server-side query uses the anon key and relies on Row Level Security.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Quality checks
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
+```
 
-## Deploy on Vercel
+## Learn more
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Supabase Documentation](https://supabase.com/docs)

@@ -16,6 +16,8 @@ import { ProfileSidebar } from "@/components/sections/ProfileSidebar";
 import { SimilarCraftsmen } from "@/components/sections/SimilarCraftsmen";
 import { craftsmen, getCraftsmanById } from "@/data/craftsmen";
 import { getReviewsForCraftsman } from "@/data/reviews";
+import { getAuthenticatedUser } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 
 interface MajstorPageProps {
   params: Promise<{ id: string }>;
@@ -49,6 +51,20 @@ export default async function MajstorPage({ params }: MajstorPageProps) {
         other.id !== craftsman.id && other.categorySlugs.some((slug) => craftsman.categorySlugs.includes(slug)),
     )
     .slice(0, 4);
+
+  const authenticatedUser = await getAuthenticatedUser();
+  const showFavourite = !authenticatedUser || authenticatedUser.profile.role === "korisnik";
+  let initialFavourited = false;
+  if (authenticatedUser?.profile.role === "korisnik") {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("favourites")
+      .select("craftsman_ref")
+      .eq("user_id", authenticatedUser.profile.id)
+      .eq("craftsman_ref", craftsman.id)
+      .maybeSingle();
+    initialFavourited = Boolean(data);
+  }
 
   return (
     <>
@@ -169,7 +185,12 @@ export default async function MajstorPage({ params }: MajstorPageProps) {
           </div>
 
           {/* Sidebar (Desktop) */}
-          <ProfileSidebar craftsman={craftsman} />
+          <ProfileSidebar
+            craftsman={craftsman}
+            showFavourite={showFavourite}
+            userId={authenticatedUser?.profile.id ?? null}
+            initialFavourited={initialFavourited}
+          />
         </div>
 
         {similarCraftsmen.length > 0 ? (

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -6,13 +7,18 @@ import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { craftsmanMobileNav, craftsmanSidebarLinks } from "@/data/navigation";
 import { incomingJobRequests } from "@/data/job-requests";
 import { getReviewsForCraftsman } from "@/data/reviews";
+import { getAuthenticatedUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
   title: "Nadzorna ploča majstora",
   robots: { index: false, follow: false },
 };
 
-export default function PanelMajstoraPage() {
+export default async function PanelMajstoraPage() {
+  const authenticatedUser = await getAuthenticatedUser();
+  if (!authenticatedUser) redirect("/prijava?redirect=/panel-majstora");
+  const { profile, craftsmanProfile } = authenticatedUser;
+
   const recentReviews = getReviewsForCraftsman("haris-mujkic").slice(-2);
 
   return (
@@ -20,7 +26,11 @@ export default function PanelMajstoraPage() {
       <DashboardSidebar
         width="w-72"
         links={craftsmanSidebarLinks}
-        user={{ name: "Haris Mujić", roleLabel: "Vodoinstalater", avatarUrl: "/images/avatars/profil-haris-mujkic.jpg" }}
+        user={{
+          name: `${profile.firstName} ${profile.lastName}`.trim(),
+          roleLabel: craftsmanProfile?.headline || "Majstor",
+          avatarUrl: profile.avatarUrl || "/images/avatars/profil-haris-mujkic.jpg",
+        }}
       />
 
       <main className="min-h-screen pb-24 md:ml-72 md:pb-8">

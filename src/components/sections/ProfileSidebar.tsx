@@ -2,10 +2,18 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
 import { StarRating } from "@/components/ui/StarRating";
 import { ProfileContactActions } from "@/components/sections/ProfileContactActions";
+import { FavouriteButton } from "@/components/sections/FavouriteButton";
 import type { Craftsman } from "@/types";
 
+interface ProfileSidebarProps {
+  craftsman: Craftsman;
+  showFavourite: boolean;
+  userId: string | null;
+  initialFavourited: boolean;
+}
+
 /** Sticky desktop contact card: photo, rating, verification, and the Pozovi/Poruka actions. */
-export function ProfileSidebar({ craftsman }: { craftsman: Craftsman }) {
+export function ProfileSidebar({ craftsman, showFavourite, userId, initialFavourited }: ProfileSidebarProps) {
   return (
     <div className="lg:sticky lg:top-28">
       <div className="flex flex-col items-center rounded-3xl bg-surface-white p-8 text-center shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
@@ -25,6 +33,14 @@ export function ProfileSidebar({ craftsman }: { craftsman: Craftsman }) {
         ) : null}
         <StarRating rating={craftsman.rating} reviewCount={craftsman.reviewCount} className="mb-6" />
         <ProfileContactActions phone={craftsman.phone} craftsmanId={craftsman.id} className="w-full" />
+        {showFavourite ? (
+          <FavouriteButton
+            craftsmanId={craftsman.id}
+            userId={userId}
+            initialFavourited={initialFavourited}
+            className="mt-3 w-full"
+          />
+        ) : null}
       </div>
     </div>
   );
