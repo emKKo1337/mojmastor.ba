@@ -26,6 +26,8 @@ export interface Customer extends BaseUser {
 export interface Category {
   slug: string;
   name: string;
+  pluralName: string;
+  description: string;
   icon: string;
   craftsmanCount: number;
 }
@@ -52,6 +54,8 @@ export interface Craftsman extends BaseUser {
   tags: string[];
   skills: string[];
   neighborhood: string;
+  phone: string;
+  responseTime: string;
   gallery: { src: string; caption: string }[];
   workingHours: WorkingHours[];
 }

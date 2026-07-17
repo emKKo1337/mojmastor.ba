@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { CraftsmanCard } from "@/components/cards/CraftsmanCard";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
-import { cn } from "@/lib/utils";
+import { Pagination } from "@/components/ui/Pagination";
 import type { Craftsman } from "@/types";
 
 const PAGE_SIZE = 6;
@@ -129,43 +129,7 @@ export function SearchResults({ craftsmen, locationLabel, categoryLabel }: Searc
             </div>
           )}
 
-          {totalPages > 1 ? (
-            <div className="mt-12 flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-light text-text-muted transition-all hover:border-primary hover:text-primary disabled:pointer-events-none disabled:opacity-40"
-                aria-label="Prethodna stranica"
-              >
-                <MaterialIcon name="chevron_left" />
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-                <button
-                  key={num}
-                  type="button"
-                  onClick={() => setPage(num)}
-                  className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-lg border font-bold transition-all",
-                    num === currentPage
-                      ? "border-primary bg-primary text-white"
-                      : "border-border-light text-text-muted hover:border-primary hover:text-primary",
-                  )}
-                >
-                  {num}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-light text-text-muted transition-all hover:border-primary hover:text-primary disabled:pointer-events-none disabled:opacity-40"
-                aria-label="Sljedeća stranica"
-              >
-                <MaterialIcon name="chevron_right" />
-              </button>
-            </div>
-          ) : null}
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} className="mt-12" />
         </section>
       </div>
     </>
