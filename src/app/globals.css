@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens sourced from the Google Stitch export (DESIGN.md).
+ * Raw values live under an `--mm-*` namespace and get mapped into
+ * Tailwind's `--color-*` theme keys below, so every `bg-surface`,
+ * `text-text-main`, etc. utility automatically follows light/dark mode
+ * without needing `dark:` variants sprinkled through every component.
+ */
+:root {
+  --mm-background: #f7f9fb;
+  --mm-surface: #f7f9fb;
+  --mm-surface-bright: #f7f9fb;
+  --mm-surface-dim: #d8dadc;
+  --mm-surface-white: #ffffff;
+  --mm-surface-container-lowest: #ffffff;
+  --mm-surface-container-low: #f2f4f6;
+  --mm-surface-container: #eceef0;
+  --mm-surface-container-high: #e6e8ea;
+  --mm-surface-container-highest: #e0e3e5;
+  --mm-surface-variant: #e0e3e5;
+
+  --mm-text-main: #0f172a;
+  --mm-text-muted: #64748b;
+  --mm-on-surface: #191c1e;
+  --mm-on-surface-variant: #434655;
+  --mm-inverse-surface: #2d3133;
+  --mm-inverse-on-surface: #eff1f3;
+  --mm-outline: #737686;
+  --mm-outline-variant: #c3c6d7;
+  --mm-border-light: #e2e8f0;
+}
+
+.dark {
+  --mm-background: #14171c;
+  --mm-surface: #14171c;
+  --mm-surface-bright: #1a1e24;
+  --mm-surface-dim: #0f1216;
+  --mm-surface-white: #1c2027;
+  --mm-surface-container-lowest: #1c2027;
+  --mm-surface-container-low: #20242c;
+  --mm-surface-container: #262b34;
+  --mm-surface-container-high: #2d323c;
+  --mm-surface-container-highest: #343a45;
+  --mm-surface-variant: #343a45;
+
+  --mm-text-main: #eff1f3;
+  --mm-text-muted: #a3aab8;
+  --mm-on-surface: #eff1f3;
+  --mm-on-surface-variant: #c3c6d7;
+  --mm-inverse-surface: #eff1f3;
+  --mm-inverse-on-surface: #191c1e;
+  --mm-outline: #8b8fa3;
+  --mm-outline-variant: #434655;
+  --mm-border-light: #2d323c;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand palette (constant across themes) */
+  --color-primary: #004ac6;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #2563eb;
+  --color-on-primary-container: #eeefff;
+  --color-inverse-primary: #b4c5ff;
+  --color-primary-fixed: #dbe1ff;
+  --color-primary-fixed-dim: #b4c5ff;
+  --color-on-primary-fixed: #00174b;
+  --color-on-primary-fixed-variant: #003ea8;
+  --color-surface-tint: #0053db;
+
+  --color-secondary: #006c49;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #6cf8bb;
+  --color-on-secondary-container: #00714d;
+  --color-secondary-fixed: #6ffbbe;
+  --color-secondary-fixed-dim: #4edea3;
+  --color-on-secondary-fixed: #002113;
+  --color-on-secondary-fixed-variant: #005236;
+
+  --color-tertiary: #784b00;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #996100;
+  --color-on-tertiary-container: #ffeedd;
+  --color-tertiary-fixed: #ffddb8;
+  --color-tertiary-fixed-dim: #ffb95f;
+  --color-on-tertiary-fixed: #2a1700;
+  --color-on-tertiary-fixed-variant: #653e00;
+
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  /* Theme-reactive tokens (see :root / .dark above) */
+  --color-background: var(--mm-background);
+  --color-surface: var(--mm-surface);
+  --color-surface-bright: var(--mm-surface-bright);
+  --color-surface-dim: var(--mm-surface-dim);
+  --color-surface-white: var(--mm-surface-white);
+  --color-surface-container-lowest: var(--mm-surface-container-lowest);
+  --color-surface-container-low: var(--mm-surface-container-low);
+  --color-surface-container: var(--mm-surface-container);
+  --color-surface-container-high: var(--mm-surface-container-high);
+  --color-surface-container-highest: var(--mm-surface-container-highest);
+  --color-surface-variant: var(--mm-surface-variant);
+  --color-text-main: var(--mm-text-main);
+  --color-text-muted: var(--mm-text-muted);
+  --color-on-surface: var(--mm-on-surface);
+  --color-on-surface-variant: var(--mm-on-surface-variant);
+  --color-inverse-surface: var(--mm-inverse-surface);
+  --color-inverse-on-surface: var(--mm-inverse-on-surface);
+  --color-outline: var(--mm-outline);
+  --color-outline-variant: var(--mm-outline-variant);
+  --color-border-light: var(--mm-border-light);
+  --color-on-background: var(--mm-text-main);
+
+  /* Spacing rhythm (8px base) */
+  --spacing-base: 8px;
+  --spacing-gutter: 24px;
+  --spacing-margin-mobile: 16px;
+  --spacing-margin-tablet: 32px;
+  --spacing-margin-desktop: 64px;
+  --spacing-container-max: 1280px;
+
+  /* Semantic type scale */
+  --text-display-lg: 48px;
+  --text-display-lg--line-height: 56px;
+  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-lg--font-weight: 700;
+
+  --text-display-lg-mobile: 32px;
+  --text-display-lg-mobile--line-height: 40px;
+  --text-display-lg-mobile--letter-spacing: -0.01em;
+  --text-display-lg-mobile--font-weight: 700;
+
+  --text-headline-lg: 30px;
+  --text-headline-lg--line-height: 38px;
+  --text-headline-lg--letter-spacing: -0.01em;
+  --text-headline-lg--font-weight: 600;
+
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 32px;
+  --text-headline-md--font-weight: 600;
+
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 28px;
+  --text-body-lg--font-weight: 400;
+
+  --text-body-md: 16px;
+  --text-body-md--line-height: 24px;
+  --text-body-md--font-weight: 400;
+
+  --text-label-lg: 14px;
+  --text-label-lg--line-height: 20px;
+  --text-label-lg--letter-spacing: 0.01em;
+  --text-label-lg--font-weight: 600;
+
+  --text-label-sm: 12px;
+  --text-label-sm--line-height: 16px;
+  --text-label-sm--letter-spacing: 0.01em;
+  --text-label-sm--font-weight: 500;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text-main);
+  color-scheme: light;
+}
+
+.dark body {
+  color-scheme: dark;
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  vertical-align: middle;
+  -webkit-font-smoothing: antialiased;
+}
+
+.material-symbols-outlined.icon-fill {
+  font-variation-settings:
+    "FILL" 1,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-border-light);
+  border-radius: 10px;
+}
