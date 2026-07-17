@@ -1,7 +1,6 @@
 export const mainNavLinks = [
   { href: "/", label: "Početna" },
   { href: "/kategorije", label: "Kategorije" },
-  { href: "/#kako-radi", label: "Kako radi" },
   { href: "/registracija?tip=majstor", label: "Postani majstor" },
 ];
 

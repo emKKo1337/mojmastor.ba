@@ -9,32 +9,6 @@ import { Button } from "@/components/ui/Button";
 import { categories } from "@/data/categories";
 import { testimonials } from "@/data/testimonials";
 
-const steps = [
-  {
-    number: 1,
-    title: "Objavite zahtjev",
-    description:
-      "Detaljno opišite što Vam treba, dodajte slike i lokaciju. Potpuno besplatno i za manje od 2 minute.",
-    image: "/images/illustrations/kako-radi-1.jpg",
-    alt: "Zahtjev za renoviranje na ekranu telefona",
-  },
-  {
-    number: 2,
-    title: "Primite ponude",
-    description: "Kvalifikovani majstori iz Vaše blizine će poslati svoje ponude i rokove za završetak posla.",
-    image: "/images/illustrations/kako-radi-2.jpg",
-    alt: "Profili majstora sa ocjenama i ponudama",
-  },
-  {
-    number: 3,
-    title: "Odaberite najboljeg",
-    description:
-      "Pogledajte recenzije, prethodne radove i izaberite majstora koji Vam najviše odgovara. Plaćate tek nakon završenog posla.",
-    image: "/images/illustrations/kako-radi-3.jpg",
-    alt: "Zadovoljan klijent i majstor se rukuju",
-  },
-];
-
 export default function HomePage() {
   return (
     <>
@@ -102,37 +76,6 @@ export default function HomePage() {
               {categories.map((category) => (
                 <CategoryCard key={category.slug} category={category} />
               ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="kako-radi" className="bg-surface py-20 md:py-32">
-          <div className="mx-auto max-w-container-max px-margin-mobile md:px-margin-desktop">
-            <div className="mb-16 text-center md:mb-24">
-              <h2 className="mb-4 text-headline-lg">Kako radi MojMajstor.ba?</h2>
-              <p className="mx-auto max-w-2xl text-body-lg text-text-muted">
-                Jednostavan proces u tri koraka koji Vam štedi vrijeme i novac.
-              </p>
-            </div>
-            <div className="relative grid grid-cols-1 gap-12 md:grid-cols-3">
-              <div className="absolute left-0 top-1/3 -z-10 hidden h-[2px] w-full bg-gradient-to-r from-transparent via-border-light to-transparent md:block" />
-              {steps.map((step) => (
-                <div key={step.number} className="flex flex-col items-center text-center">
-                  <div className="relative mb-8 aspect-square w-full max-w-[280px] overflow-hidden rounded-[32px] bg-surface-white shadow-xl">
-                    <Image src={step.image} alt={step.alt} fill className="object-cover" sizes="280px" />
-                    <div className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-lg font-bold text-white">
-                      {step.number}
-                    </div>
-                  </div>
-                  <h3 className="mb-3 text-headline-md">{step.title}</h3>
-                  <p className="text-body-md text-text-muted">{step.description}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-20 text-center">
-              <Button href="/novi-zahtjev" size="lg" className="!px-10 !text-headline-md">
-                Započnite odmah
-              </Button>
             </div>
           </div>
         </section>
