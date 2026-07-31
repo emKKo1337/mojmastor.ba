@@ -9,6 +9,14 @@ const staticRoutes = [
   "/novi-zahtjev",
   "/prijava",
   "/registracija",
+  "/o-nama",
+  "/kontakt",
+  "/karijera",
+  "/blog",
+  "/pomoc",
+  "/faq",
+  "/uslovi-koristenja",
+  "/politika-privatnosti",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
