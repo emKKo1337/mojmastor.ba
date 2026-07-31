@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -41,9 +42,7 @@ export default async function SacuvaniMajstoriPage() {
       />
 
       <main className="min-h-screen pb-24 md:ml-64 md:pb-8">
-        <header className="sticky top-0 z-30 flex h-20 items-center bg-surface-white px-margin-mobile md:px-margin-desktop">
-          <h1 className="text-headline-md text-text-main">Sačuvani majstori</h1>
-        </header>
+        <DashboardHeader title="Sačuvani majstori" />
 
         <div className="mx-auto max-w-container-max px-margin-mobile py-8 md:px-margin-desktop">
           {savedCraftsmen.length > 0 ? (

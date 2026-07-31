@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -67,9 +68,7 @@ export default async function MajstorProfilPage() {
       />
 
       <main className="min-h-screen pb-24 md:ml-72 md:pb-8">
-        <header className="sticky top-0 z-30 flex h-20 items-center bg-surface-white px-margin-mobile md:px-margin-desktop">
-          <h1 className="text-headline-md text-text-main">Uredi profil</h1>
-        </header>
+        <DashboardHeader title="Uredi profil" />
 
         <div className="mx-auto max-w-3xl space-y-8 px-margin-mobile py-8 md:px-margin-desktop">
           <ProfileSection title="Kontakt informacije" description="Ovi podaci se koriste za komunikaciju sa klijentima.">

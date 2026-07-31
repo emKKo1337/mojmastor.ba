@@ -1,6 +1,12 @@
 import type { JobRequest } from "@/types";
 
-export const incomingJobRequests: JobRequest[] = [
+/**
+ * Single source of truth for job-request mock data, read from two angles:
+ * the majstor's incoming/active/completed queues (panel-majstora) and a
+ * korisnik's own posted requests (nadzorna-ploca/zahtjevi). There's no
+ * per-user backend for requests yet, so both dashboards read the same list.
+ */
+export const jobRequests: JobRequest[] = [
   {
     id: "jr1",
     title: "Popravka česme i odvoda",
@@ -25,4 +31,86 @@ export const incomingJobRequests: JobRequest[] = [
     status: "pending",
     createdAgo: "Prije 2 sata",
   },
+  {
+    id: "jr3",
+    title: "Instalacija bojlera od 80L",
+    description: "Potrebna montaža novog bojlera i priključak na postojeću instalaciju.",
+    categorySlug: "servis-bojlera",
+    city: "Sarajevo",
+    neighborhood: "Sarajevo, Ilidža",
+    budgetFrom: 60,
+    budgetTo: 90,
+    status: "offer_received",
+    createdAgo: "Prije 5 sati",
+  },
+  {
+    id: "jr4",
+    title: "Zamjena instalacija u kupatilu",
+    description: "Kompletna zamjena vodovodnih instalacija prije postavljanja keramike.",
+    categorySlug: "vodoinstalater",
+    city: "Sarajevo",
+    neighborhood: "Sarajevo, Centar",
+    budgetFrom: 380,
+    preferredDate: "Ponedjeljak 08:00",
+    status: "accepted",
+    createdAgo: "Prije 3 dana",
+  },
+  {
+    id: "jr5",
+    title: "Odštopavanje kanalizacije",
+    description: "Kanalizacija u dvorištu se povremeno začepljuje, potrebna dijagnostika i čišćenje.",
+    categorySlug: "vodoinstalater",
+    city: "Sarajevo",
+    neighborhood: "Sarajevo, Dobrinja",
+    budgetFrom: 70,
+    status: "accepted",
+    createdAgo: "Prije 5 dana",
+  },
+  {
+    id: "jr6",
+    title: "Popravka slavine u kuhinji",
+    description: "Slavina curi na spoju, potrebna zamjena zaptivke ili cijele slavine.",
+    categorySlug: "vodoinstalater",
+    city: "Sarajevo",
+    neighborhood: "Sarajevo, Novo Sarajevo",
+    budgetFrom: 25,
+    status: "completed",
+    createdAgo: "Prije 2 sedmice",
+  },
+  {
+    id: "jr7",
+    title: "Renovacija kupatila — kompletna usluga",
+    description: "Zamjena keramike, sanitarija i instalacija u kupatilu od 6m².",
+    categorySlug: "vodoinstalater",
+    city: "Sarajevo",
+    neighborhood: "Sarajevo, Ilidža",
+    budgetFrom: 1450,
+    status: "completed",
+    createdAgo: "Prije 1 mjesec",
+  },
+  {
+    id: "jr8",
+    title: "Zamjena ventila za vodu",
+    description: "Potrebna hitna zamjena glavnog ventila za vodu u stanu.",
+    categorySlug: "vodoinstalater",
+    city: "Sarajevo",
+    neighborhood: "Sarajevo, Centar",
+    budgetFrom: 40,
+    status: "completed",
+    createdAgo: "Prije 6 sedmica",
+  },
+  {
+    id: "jr9",
+    title: "Instalacija perilice posuđa",
+    description: "Priključivanje nove perilice posuđa na vodovodnu i kanalizacionu instalaciju.",
+    categorySlug: "vodoinstalater",
+    city: "Sarajevo",
+    neighborhood: "Sarajevo, Novi Grad",
+    budgetFrom: 30,
+    status: "cancelled",
+    createdAgo: "Prije 2 mjeseca",
+  },
 ];
+
+/** @deprecated use `jobRequests` filtered by status instead. Kept for existing imports. */
+export const incomingJobRequests = jobRequests.filter((job) => job.status === "pending");
