@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MobileActionBar } from "@/components/layout/MobileActionBar";
 import { Badge } from "@/components/ui/Badge";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Chip } from "@/components/ui/Chip";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { StarRating } from "@/components/ui/StarRating";
@@ -14,7 +15,9 @@ import { ProfileInfoSection } from "@/components/sections/ProfileInfoSection";
 import { ProfileReviews } from "@/components/sections/ProfileReviews";
 import { ProfileSidebar } from "@/components/sections/ProfileSidebar";
 import { SimilarCraftsmen } from "@/components/sections/SimilarCraftsmen";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { craftsmen, getCraftsmanById } from "@/data/craftsmen";
+import { getCategoryBySlug } from "@/data/categories";
 import { getReviewsForCraftsman } from "@/data/reviews";
 import { getAuthenticatedUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -68,10 +71,68 @@ export default async function MajstorPage({ params }: MajstorPageProps) {
     initialFavourited = Boolean(data);
   }
 
+  const primaryCategory = getCategoryBySlug(craftsman.categorySlugs[0] ?? "");
+
   return (
     <>
       <SiteHeader />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          name: craftsman.fullName,
+          description: craftsman.bio[0] ?? craftsman.headline,
+          image: craftsman.avatarUrl,
+          telephone: craftsman.phone || undefined,
+          address: { "@type": "PostalAddress", addressLocality: craftsman.city, addressCountry: "BA" },
+          ...(craftsman.reviewCount > 0
+            ? {
+                aggregateRating: {
+                  "@type": "AggregateRating",
+                  ratingValue: craftsman.rating,
+                  reviewCount: craftsman.reviewCount,
+                },
+              }
+            : {}),
+          ...(craftsman.hourlyRateFrom > 0 ? { priceRange: `Od ${craftsman.hourlyRateFrom} KM` } : {}),
+        }}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Početna", item: "https://mojmajstor.ba" },
+            ...(primaryCategory
+              ? [
+                  {
+                    "@type": "ListItem",
+                    position: 2,
+                    name: primaryCategory.pluralName,
+                    item: `https://mojmajstor.ba/kategorije/${primaryCategory.slug}`,
+                  },
+                ]
+              : []),
+            {
+              "@type": "ListItem",
+              position: primaryCategory ? 3 : 2,
+              name: craftsman.fullName,
+              item: `https://mojmajstor.ba/majstor/${craftsman.id}`,
+            },
+          ],
+        }}
+      />
       <main className="mx-auto max-w-container-max px-margin-mobile pb-28 pt-12 md:px-margin-desktop lg:pb-12">
+        {primaryCategory ? (
+          <Breadcrumb
+            items={[
+              { label: "Početna", href: "/" },
+              { label: primaryCategory.pluralName, href: `/kategorije/${primaryCategory.slug}` },
+              { label: craftsman.fullName },
+            ]}
+            className="mb-8"
+          />
+        ) : null}
         {/* Hero */}
         <section className="mb-12 overflow-hidden rounded-3xl bg-surface-white shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
           <div className="relative h-48 w-full md:h-64">

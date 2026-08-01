@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { categories } from "@/data/categories";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -77,6 +78,30 @@ export default function RootLayout({
         <Script id="mm-theme-init" strategy="beforeInteractive">
           {themeInitScript}
         </Script>
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "MojMajstor.ba",
+            url: "https://mojmajstor.ba",
+            description:
+              "MojMajstor.ba povezuje korisnike sa provjerenim majstorima i servisnim profesionalcima širom Bosne i Hercegovine.",
+            areaServed: { "@type": "Country", name: "Bosna i Hercegovina" },
+          }}
+        />
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "MojMajstor.ba",
+            url: "https://mojmajstor.ba",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: "https://mojmajstor.ba/pretraga?q={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+          }}
+        />
         {children}
       </body>
     </html>

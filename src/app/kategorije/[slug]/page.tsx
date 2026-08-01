@@ -6,6 +6,7 @@ import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { CategoryListing } from "@/components/sections/CategoryListing";
 import { BecomeCraftsmanCta } from "@/components/sections/BecomeCraftsmanCta";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { categories, getCategoryBySlug } from "@/data/categories";
 import { craftsmen } from "@/data/craftsmen";
 import { cities } from "@/data/cities";
@@ -43,6 +44,21 @@ export default async function CategoryListingPage({ params }: CategoryPageProps)
   return (
     <>
       <SiteHeader />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Početna", item: "https://mojmajstor.ba" },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: category.pluralName,
+              item: `https://mojmajstor.ba/kategorije/${category.slug}`,
+            },
+          ],
+        }}
+      />
       <main>
         <section className="relative overflow-hidden border-b border-border-light bg-surface-white pb-16 pt-10 md:pb-24 md:pt-14">
           <div className="absolute right-0 top-0 -z-10 h-[500px] w-[500px] -translate-y-1/3 translate-x-1/4 rounded-full bg-primary/5 blur-3xl" />
