@@ -6,11 +6,13 @@ import { DashboardEmptyState } from "@/components/layout/DashboardEmptyState";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { JobRequestCard } from "@/components/sections/JobRequestCard";
+import { CancelRequestAction } from "@/components/sections/JobRequestActions";
 import { Button } from "@/components/ui/Button";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { customerMobileNav, customerSidebarLinks } from "@/data/navigation";
-import { jobRequests } from "@/data/job-requests";
+import { toJobRequest } from "@/lib/job-requests/mappers";
 import { getAuthenticatedUser } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Moji zahtjevi",
@@ -21,6 +23,15 @@ export default async function MojiZahtjeviPage() {
   const authenticatedUser = await getAuthenticatedUser();
   if (!authenticatedUser) redirect("/prijava?redirect=/nadzorna-ploca/zahtjevi");
   const { profile } = authenticatedUser;
+
+  const supabase = await createClient();
+  const { data: rows } = await supabase
+    .from("job_requests")
+    .select("*")
+    .eq("customer_id", profile.id)
+    .order("created_at", { ascending: false });
+
+  const myRequests = (rows ?? []).map((row) => ({ job: toJobRequest(row), status: row.status }));
 
   return (
     <>
@@ -44,8 +55,14 @@ export default async function MojiZahtjeviPage() {
             </Button>
           </div>
 
-          {jobRequests.length > 0 ? (
-            jobRequests.map((job) => <JobRequestCard key={job.id} job={job} />)
+          {myRequests.length > 0 ? (
+            myRequests.map(({ job, status }) => (
+              <JobRequestCard
+                key={job.id}
+                job={job}
+                actions={status === "pending" ? <CancelRequestAction jobId={job.id} /> : undefined}
+              />
+            ))
           ) : (
             <DashboardEmptyState
               icon="pending_actions"

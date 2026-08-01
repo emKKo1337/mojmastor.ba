@@ -6,9 +6,11 @@ import { DashboardEmptyState } from "@/components/layout/DashboardEmptyState";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { JobRequestCard } from "@/components/sections/JobRequestCard";
+import { AcceptDeclineActions } from "@/components/sections/JobRequestActions";
 import { craftsmanMobileNav, craftsmanSidebarLinks } from "@/data/navigation";
-import { jobRequests } from "@/data/job-requests";
+import { toJobRequest } from "@/lib/job-requests/mappers";
 import { getAuthenticatedUser } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Novi poslovi",
@@ -21,7 +23,16 @@ export default async function NoviPosloviPage() {
   const { profile, craftsmanProfile } = authenticatedUser;
   if (profile.role !== "majstor") redirect("/nadzorna-ploca");
 
-  const newJobs = jobRequests.filter((job) => job.status === "pending" || job.status === "offer_received");
+  const supabase = await createClient();
+  const { data: rows } = await supabase
+    .from("job_requests")
+    .select("*")
+    .eq("status", "pending")
+    .is("craftsman_id", null)
+    .not("declined_by", "cs", `{${profile.id}}`)
+    .order("created_at", { ascending: false });
+
+  const newJobs = (rows ?? []).map(toJobRequest);
 
   return (
     <>
@@ -40,33 +51,12 @@ export default async function NoviPosloviPage() {
 
         <div className="mx-auto max-w-4xl space-y-4 px-margin-mobile py-8 md:px-margin-desktop">
           {newJobs.length > 0 ? (
-            newJobs.map((job) => (
-              <JobRequestCard
-                key={job.id}
-                job={job}
-                actions={
-                  <>
-                    <button
-                      type="button"
-                      className="flex-1 rounded-xl bg-primary py-3 text-label-lg text-white transition-colors hover:bg-primary/90 active:scale-95"
-                    >
-                      Prihvati posao
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-xl border border-border-light px-6 py-3 text-label-lg text-text-muted transition-colors hover:bg-surface-container-low"
-                    >
-                      Odbij
-                    </button>
-                  </>
-                }
-              />
-            ))
+            newJobs.map((job) => <JobRequestCard key={job.id} job={job} actions={<AcceptDeclineActions jobId={job.id} />} />)
           ) : (
             <DashboardEmptyState
               icon="inbox"
               title="Trenutno nemate novih upita"
-              description="Novi upiti za posao će se pojaviti ovdje čim ih korisnici pošalju."
+              description="Novi upiti za posao će se pojaviti ovdje čim ih korisnici pošalju za usluge koje nudite."
             />
           )}
         </div>

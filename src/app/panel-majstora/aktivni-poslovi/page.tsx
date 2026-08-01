@@ -6,10 +6,11 @@ import { DashboardEmptyState } from "@/components/layout/DashboardEmptyState";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { JobRequestCard } from "@/components/sections/JobRequestCard";
-import { Button } from "@/components/ui/Button";
+import { CompleteJobAction } from "@/components/sections/JobRequestActions";
 import { craftsmanMobileNav, craftsmanSidebarLinks } from "@/data/navigation";
-import { jobRequests } from "@/data/job-requests";
+import { toJobRequest } from "@/lib/job-requests/mappers";
 import { getAuthenticatedUser } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Aktivni poslovi",
@@ -22,7 +23,15 @@ export default async function AktivniPosloviPage() {
   const { profile, craftsmanProfile } = authenticatedUser;
   if (profile.role !== "majstor") redirect("/nadzorna-ploca");
 
-  const activeJobs = jobRequests.filter((job) => job.status === "accepted");
+  const supabase = await createClient();
+  const { data: rows } = await supabase
+    .from("job_requests")
+    .select("*")
+    .eq("status", "accepted")
+    .eq("craftsman_id", profile.id)
+    .order("created_at", { ascending: false });
+
+  const activeJobs = (rows ?? []).map(toJobRequest);
 
   return (
     <>
@@ -41,25 +50,7 @@ export default async function AktivniPosloviPage() {
 
         <div className="mx-auto max-w-4xl space-y-4 px-margin-mobile py-8 md:px-margin-desktop">
           {activeJobs.length > 0 ? (
-            activeJobs.map((job) => (
-              <JobRequestCard
-                key={job.id}
-                job={job}
-                actions={
-                  <>
-                    <button
-                      type="button"
-                      className="flex-1 rounded-xl bg-primary py-3 text-label-lg text-white transition-colors hover:bg-primary/90 active:scale-95"
-                    >
-                      Označi kao završeno
-                    </button>
-                    <Button href="/poruke" variant="outline" className="flex-1">
-                      Pošalji poruku
-                    </Button>
-                  </>
-                }
-              />
-            ))
+            activeJobs.map((job) => <JobRequestCard key={job.id} job={job} actions={<CompleteJobAction jobId={job.id} />} />)
           ) : (
             <DashboardEmptyState
               icon="construction"

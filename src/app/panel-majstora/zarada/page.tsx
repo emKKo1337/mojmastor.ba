@@ -2,26 +2,20 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
+import { DashboardEmptyState } from "@/components/layout/DashboardEmptyState";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { craftsmanMobileNav, craftsmanSidebarLinks } from "@/data/navigation";
-import { jobRequests } from "@/data/job-requests";
 import { getAuthenticatedUser } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Zarada",
   robots: { index: false, follow: false },
 };
 
-const monthlyEarnings = [
-  { label: "Feb", amount: 620 },
-  { label: "Mar", amount: 890 },
-  { label: "Apr", amount: 740 },
-  { label: "Maj", amount: 1120 },
-  { label: "Jun", amount: 980 },
-  { label: "Jul", amount: 1450 },
-];
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Avg", "Sep", "Okt", "Nov", "Dec"];
 
 export default async function ZaradaPage() {
   const authenticatedUser = await getAuthenticatedUser();
@@ -29,9 +23,29 @@ export default async function ZaradaPage() {
   const { profile, craftsmanProfile } = authenticatedUser;
   if (profile.role !== "majstor") redirect("/nadzorna-ploca");
 
-  const completedJobs = jobRequests.filter((job) => job.status === "completed" && job.budgetFrom);
-  const totalEarnings = completedJobs.reduce((sum, job) => sum + (job.budgetFrom ?? 0), 0);
-  const maxMonthlyEarnings = Math.max(...monthlyEarnings.map((month) => month.amount));
+  const supabase = await createClient();
+  const { data: rows } = await supabase
+    .from("job_requests")
+    .select("*")
+    .eq("status", "completed")
+    .eq("craftsman_id", profile.id)
+    .order("updated_at", { ascending: false });
+
+  const completedJobs = rows ?? [];
+  const totalEarnings = completedJobs.reduce((sum, job) => sum + (job.budget_from ?? 0), 0);
+
+  const now = new Date();
+  const monthlyEarnings = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+    const amount = completedJobs
+      .filter((job) => {
+        const completedAt = new Date(job.updated_at);
+        return completedAt.getFullYear() === date.getFullYear() && completedAt.getMonth() === date.getMonth();
+      })
+      .reduce((sum, job) => sum + (job.budget_from ?? 0), 0);
+    return { label: MONTH_LABELS[date.getMonth()], amount };
+  });
+  const maxMonthlyEarnings = Math.max(1, ...monthlyEarnings.map((month) => month.amount));
 
   return (
     <>
@@ -64,8 +78,8 @@ export default async function ZaradaPage() {
           <div className="rounded-xl bg-surface-white p-8 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
             <h2 className="mb-6 text-headline-md text-text-main">Zarada po mjesecu</h2>
             <div className="flex h-48 items-end gap-4">
-              {monthlyEarnings.map((month) => (
-                <div key={month.label} className="flex flex-1 flex-col items-center gap-2">
+              {monthlyEarnings.map((month, index) => (
+                <div key={`${month.label}-${index}`} className="flex flex-1 flex-col items-center gap-2">
                   <div
                     className="w-full rounded-t-lg bg-secondary/80 transition-all"
                     style={{ height: `${(month.amount / maxMonthlyEarnings) * 100}%` }}
@@ -79,21 +93,25 @@ export default async function ZaradaPage() {
 
           <div className="rounded-xl bg-surface-white p-8 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
             <h2 className="mb-6 text-headline-md text-text-main">Isplaćeni poslovi</h2>
-            <div className="divide-y divide-border-light">
-              {completedJobs.map((job) => (
-                <div key={job.id} className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
-                  <div>
-                    <p className="text-label-lg text-text-main">{job.title}</p>
-                    <p className="text-label-sm text-text-muted">
-                      {job.neighborhood} • {job.createdAgo}
+            {completedJobs.length > 0 ? (
+              <div className="divide-y divide-border-light">
+                {completedJobs.map((job) => (
+                  <div key={job.id} className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
+                    <div>
+                      <p className="text-label-lg text-text-main">{job.title}</p>
+                      <p className="text-label-sm text-text-muted">
+                        {job.neighborhood || job.city} • {new Date(job.updated_at).toLocaleDateString("bs-BA")}
+                      </p>
+                    </div>
+                    <p className="whitespace-nowrap text-label-lg font-bold text-text-main">
+                      {(job.budget_from ?? 0).toFixed(2)} KM
                     </p>
                   </div>
-                  <p className="whitespace-nowrap text-label-lg font-bold text-text-main">
-                    {job.budgetFrom?.toFixed(2)} KM
-                  </p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <DashboardEmptyState icon="payments" title="Još nemate isplaćenih poslova" />
+            )}
           </div>
         </div>
 

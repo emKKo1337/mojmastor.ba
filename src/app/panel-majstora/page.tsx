@@ -1,25 +1,54 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { JobRequestCard } from "@/components/sections/JobRequestCard";
+import { AcceptDeclineActions } from "@/components/sections/JobRequestActions";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { craftsmanMobileNav, craftsmanSidebarLinks } from "@/data/navigation";
-import { incomingJobRequests } from "@/data/job-requests";
+import { getCraftsmanById } from "@/data/craftsmen";
 import { getReviewsForCraftsman } from "@/data/reviews";
+import { toJobRequest } from "@/lib/job-requests/mappers";
 import { getAuthenticatedUser } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Nadzorna ploča majstora",
   robots: { index: false, follow: false },
 };
 
+/** Reviews aren't tied to real accounts yet — same demo stand-in used on /panel-majstora/recenzije. */
+const DEMO_CRAFTSMAN_ID = "haris-mujkic";
+
 export default async function PanelMajstoraPage() {
   const authenticatedUser = await getAuthenticatedUser();
   if (!authenticatedUser) redirect("/prijava?redirect=/panel-majstora");
   const { profile, craftsmanProfile } = authenticatedUser;
 
-  const recentReviews = getReviewsForCraftsman("haris-mujkic").slice(-2);
+  const supabase = await createClient();
+  const [{ data: newJobRows }, { data: activeJobRows }, { data: completedJobRows }] = await Promise.all([
+    supabase
+      .from("job_requests")
+      .select("*")
+      .eq("status", "pending")
+      .is("craftsman_id", null)
+      .not("declined_by", "cs", `{${profile.id}}`)
+      .order("created_at", { ascending: false })
+      .limit(3),
+    supabase.from("job_requests").select("id").eq("status", "accepted").eq("craftsman_id", profile.id),
+    supabase.from("job_requests").select("budget_from, updated_at").eq("status", "completed").eq("craftsman_id", profile.id),
+  ]);
+
+  const newJobs = (newJobRows ?? []).map(toJobRequest);
+  const activeJobsCount = (activeJobRows ?? []).length;
+  const todayEarnings = (completedJobRows ?? [])
+    .filter((job) => new Date(job.updated_at).toDateString() === new Date().toDateString())
+    .reduce((sum, job) => sum + (job.budget_from ?? 0), 0);
+
+  const demoCraftsman = getCraftsmanById(DEMO_CRAFTSMAN_ID);
+  const recentReviews = getReviewsForCraftsman(DEMO_CRAFTSMAN_ID).slice(-2);
 
   return (
     <>
@@ -45,21 +74,20 @@ export default async function PanelMajstoraPage() {
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <button
-              type="button"
+            <Link
+              href="/poruke"
               className="relative flex h-10 w-10 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-container"
               aria-label="Poruke"
             >
               <MaterialIcon name="mail" />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-error" />
-            </button>
-            <button
-              type="button"
+            </Link>
+            <Link
+              href="/panel-majstora/profil"
               className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-container"
               aria-label="Postavke"
             >
               <MaterialIcon name="settings" />
-            </button>
+            </Link>
           </div>
         </header>
 
@@ -70,12 +98,15 @@ export default async function PanelMajstoraPage() {
               <div className="relative z-10 flex h-full flex-col justify-between">
                 <div>
                   <p className="mb-1 text-label-lg text-white/80">Ukupna zarada (danas)</p>
-                  <h2 className="text-[40px] font-bold leading-tight text-white">145.50 KM</h2>
+                  <h2 className="text-[40px] font-bold leading-tight text-white">{todayEarnings.toFixed(2)} KM</h2>
                 </div>
-                <div className="mt-8 flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm text-white/90">
+                <Link
+                  href="/panel-majstora/zarada"
+                  className="mt-8 flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm text-white/90 hover:bg-white/20"
+                >
                   <MaterialIcon name="trending_up" className="text-sm" />
-                  <span>+12% u odnosu na jučer</span>
-                </div>
+                  <span>Pregled zarade</span>
+                </Link>
               </div>
             </div>
 
@@ -86,7 +117,7 @@ export default async function PanelMajstoraPage() {
                 </div>
                 <p className="mb-1 text-label-lg text-text-muted">Aktivni poslovi</p>
               </div>
-              <h2 className="text-headline-lg font-bold text-text-main">4</h2>
+              <h2 className="text-headline-lg font-bold text-text-main">{activeJobsCount}</h2>
             </div>
 
             <div className="flex flex-col justify-between rounded-xl bg-surface-white p-8 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
@@ -96,7 +127,7 @@ export default async function PanelMajstoraPage() {
                 </div>
                 <p className="mb-1 text-label-lg text-text-muted">Prosječna ocjena</p>
               </div>
-              <h2 className="text-headline-lg font-bold text-text-main">4.98</h2>
+              <h2 className="text-headline-lg font-bold text-text-main">{(demoCraftsman?.rating ?? 0).toFixed(2)}</h2>
             </div>
           </section>
 
@@ -105,68 +136,24 @@ export default async function PanelMajstoraPage() {
               <div className="flex items-center justify-between">
                 <h3 className="flex items-center gap-3 text-headline-md text-text-main">
                   Novi upiti
-                  <span className="rounded-full bg-error px-2 py-0.5 text-xs text-white">
-                    {incomingJobRequests.length} nova
-                  </span>
+                  {newJobs.length > 0 ? (
+                    <span className="rounded-full bg-error px-2 py-0.5 text-xs text-white">{newJobs.length} nova</span>
+                  ) : null}
                 </h3>
-                <button type="button" className="text-label-lg text-primary transition-all hover:underline">
+                <Link href="/panel-majstora/novi-poslovi" className="text-label-lg text-primary transition-all hover:underline">
                   Prikaži sve
-                </button>
+                </Link>
               </div>
 
-              {incomingJobRequests.map((job) => (
-                <div
-                  key={job.id}
-                  className="group rounded-xl border border-border-light bg-surface-white p-6 shadow-sm transition-all hover:shadow-md"
-                >
-                  <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <MaterialIcon name="person" className="text-3xl" />
-                      </div>
-                      <div>
-                        <h4 className="text-headline-md text-text-main transition-colors group-hover:text-primary">
-                          {job.title}
-                        </h4>
-                        <p className="mb-2 flex items-center gap-1 text-sm text-text-muted">
-                          <MaterialIcon name="location_on" className="text-sm" />
-                          {job.neighborhood} • {job.createdAgo}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          <span className="rounded-full bg-surface-container px-3 py-1 text-xs font-medium text-text-muted">
-                            {job.urgent ? "Hitno" : "Renovacija"}
-                          </span>
-                          {job.preferredDate ? (
-                            <span className="rounded-full bg-surface-container px-3 py-1 text-xs font-medium text-text-muted">
-                              {job.preferredDate}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 text-right">
-                      <p className="text-headline-md font-bold text-text-main">{job.budgetFrom?.toFixed(2)} KM</p>
-                      <p className="text-xs text-text-muted">
-                        {job.budgetFrom && job.budgetFrom > 100 ? "Ponuda klijenta" : "Procjenjena cijena"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-6 flex items-center gap-3">
-                    <button
-                      type="button"
-                      className="flex-1 rounded-xl bg-primary py-3 text-label-lg text-white transition-colors hover:bg-primary/90 active:scale-95"
-                    >
-                      {job.budgetFrom && job.budgetFrom > 100 ? "Pošalji ponudu" : "Prihvati posao"}
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-xl border border-border-light px-6 py-3 text-label-lg text-text-muted transition-colors hover:bg-surface-container-low"
-                    >
-                      {job.budgetFrom && job.budgetFrom > 100 ? "Detalji" : "Odbij"}
-                    </button>
-                  </div>
-                </div>
-              ))}
+              {newJobs.length > 0 ? (
+                newJobs.map((job) => (
+                  <JobRequestCard key={job.id} job={job} actions={<AcceptDeclineActions jobId={job.id} />} />
+                ))
+              ) : (
+                <p className="rounded-xl border border-dashed border-border-light bg-surface-white p-8 text-center text-body-md text-text-muted">
+                  Trenutno nemate novih upita.
+                </p>
+              )}
             </div>
 
             <div className="space-y-8">
@@ -192,30 +179,12 @@ export default async function PanelMajstoraPage() {
                     </div>
                   ))}
                 </div>
-                <button type="button" className="mt-6 w-full rounded-lg py-2 text-sm text-primary transition-colors hover:bg-primary/5">
+                <Link
+                  href="/panel-majstora/recenzije"
+                  className="mt-6 block w-full rounded-lg py-2 text-center text-sm text-primary transition-colors hover:bg-primary/5"
+                >
                   Sve recenzije
-                </button>
-              </div>
-
-              <div className="rounded-xl bg-surface-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
-                <div className="mb-6 flex items-center justify-between">
-                  <h3 className="text-headline-md text-text-main">Tvoj napredak</h3>
-                  <span className="text-xs font-bold text-primary">Nivo 4</span>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <div className="mb-2 flex justify-between text-xs">
-                      <span className="text-text-muted">Do sljedećeg nivoa</span>
-                      <span className="font-bold">85%</span>
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container">
-                      <div className="h-full w-[85%] rounded-full bg-primary" />
-                    </div>
-                  </div>
-                  <p className="text-xs leading-relaxed text-text-muted">
-                    Odlično radiš! Prihvati još 3 posla sa ocjenom 5.0 da postaneš &ldquo;Super Majstor&rdquo;.
-                  </p>
-                </div>
+                </Link>
               </div>
             </div>
           </section>

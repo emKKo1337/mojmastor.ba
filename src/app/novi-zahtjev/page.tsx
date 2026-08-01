@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { NewRequestForm } from "@/components/sections/NewRequestForm";
+import { getAuthenticatedUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
   title: "Postavi novi zahtjev",
@@ -9,7 +11,10 @@ export const metadata: Metadata = {
     "Opišite svoj problem, odredite budžet i dozvolite provjerenim majstorima na MojMajstor.ba da Vam ponude najbolje rješenje.",
 };
 
-export default function NoviZahtjevPage() {
+export default async function NoviZahtjevPage() {
+  const authenticatedUser = await getAuthenticatedUser();
+  if (!authenticatedUser) redirect("/prijava?redirect=/novi-zahtjev");
+
   return (
     <>
       <SiteHeader />

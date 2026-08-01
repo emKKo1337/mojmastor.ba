@@ -10,6 +10,7 @@ import { customerMobileNav, customerSidebarLinks } from "@/data/navigation";
 import { customerActivity, recommendedForCustomer } from "@/data/activity";
 import { getCraftsmanById } from "@/data/craftsmen";
 import { getAuthenticatedUser } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -32,6 +33,13 @@ export default async function NadzornaPlocaPage() {
   const recommended = recommendedForCustomer
     .map((entry) => ({ craftsman: getCraftsmanById(entry.craftsmanId), note: entry.note }))
     .filter((entry): entry is { craftsman: NonNullable<typeof entry.craftsman>; note: string } => Boolean(entry.craftsman));
+
+  const supabase = await createClient();
+  const { count: activeRequestCount } = await supabase
+    .from("job_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("customer_id", profile.id)
+    .in("status", ["pending", "accepted"]);
 
   return (
     <>
@@ -76,10 +84,13 @@ export default async function NadzornaPlocaPage() {
                 <MaterialIcon name="task_alt" />
               </div>
               <span className="text-label-lg text-text-muted">Aktivni zahtjevi</span>
-              <span className="text-3xl font-bold text-text-main">3</span>
-              <div className="w-fit rounded-full bg-secondary-container/20 px-2 py-0.5 text-[10px] text-on-secondary-container">
-                +1 ove sedmice
-              </div>
+              <span className="text-3xl font-bold text-text-main">{activeRequestCount ?? 0}</span>
+              <Link
+                href="/nadzorna-ploca/zahtjevi"
+                className="w-fit rounded-full bg-secondary-container/20 px-2 py-0.5 text-[10px] text-on-secondary-container hover:underline"
+              >
+                Pregledaj zahtjeve
+              </Link>
             </div>
 
             <div className="flex flex-col space-y-2 rounded-xl border border-white bg-surface-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.05)] transition-transform duration-300 hover:-translate-y-1">

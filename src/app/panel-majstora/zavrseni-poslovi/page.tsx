@@ -7,8 +7,9 @@ import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { JobRequestCard } from "@/components/sections/JobRequestCard";
 import { craftsmanMobileNav, craftsmanSidebarLinks } from "@/data/navigation";
-import { jobRequests } from "@/data/job-requests";
+import { toJobRequest } from "@/lib/job-requests/mappers";
 import { getAuthenticatedUser } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Završeni poslovi",
@@ -21,7 +22,15 @@ export default async function ZavrseniPosloviPage() {
   const { profile, craftsmanProfile } = authenticatedUser;
   if (profile.role !== "majstor") redirect("/nadzorna-ploca");
 
-  const completedJobs = jobRequests.filter((job) => job.status === "completed");
+  const supabase = await createClient();
+  const { data: rows } = await supabase
+    .from("job_requests")
+    .select("*")
+    .eq("status", "completed")
+    .eq("craftsman_id", profile.id)
+    .order("updated_at", { ascending: false });
+
+  const completedJobs = (rows ?? []).map(toJobRequest);
 
   return (
     <>

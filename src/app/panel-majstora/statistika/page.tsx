@@ -6,28 +6,20 @@ import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 import { craftsmanMobileNav, craftsmanSidebarLinks } from "@/data/navigation";
+import { getCategoryBySlug } from "@/data/categories";
 import { getCraftsmanById } from "@/data/craftsmen";
 import { getAuthenticatedUser } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Statistika",
   robots: { index: false, follow: false },
 };
 
-const monthlyJobs = [
-  { label: "Feb", count: 8 },
-  { label: "Mar", count: 12 },
-  { label: "Apr", count: 10 },
-  { label: "Maj", count: 15 },
-  { label: "Jun", count: 13 },
-  { label: "Jul", count: 18 },
-];
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Avg", "Sep", "Okt", "Nov", "Dec"];
 
-const categoryBreakdown = [
-  { label: "Vodoinstalacije", percent: 62 },
-  { label: "Postavljanje keramike", percent: 28 },
-  { label: "Ostalo", percent: 10 },
-];
+/** Rating and response time aren't tied to real accounts yet (no per-user reviews table) — same demo stand-in used on /panel-majstora/recenzije. */
+const DEMO_CRAFTSMAN_ID = "haris-mujkic";
 
 export default async function StatistikaPage() {
   const authenticatedUser = await getAuthenticatedUser();
@@ -35,14 +27,47 @@ export default async function StatistikaPage() {
   const { profile, craftsmanProfile } = authenticatedUser;
   if (profile.role !== "majstor") redirect("/nadzorna-ploca");
 
-  const craftsman = getCraftsmanById("haris-mujkic");
-  const maxMonthlyJobs = Math.max(...monthlyJobs.map((month) => month.count));
+  const supabase = await createClient();
+  const { data: rows } = await supabase
+    .from("job_requests")
+    .select("*")
+    .eq("craftsman_id", profile.id)
+    .in("status", ["accepted", "completed"]);
+
+  const jobs = rows ?? [];
+  const demoCraftsman = getCraftsmanById(DEMO_CRAFTSMAN_ID);
+
+  const now = new Date();
+  const monthlyJobs = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+    const count = jobs.filter((job) => {
+      const createdAt = new Date(job.created_at);
+      return createdAt.getFullYear() === date.getFullYear() && createdAt.getMonth() === date.getMonth();
+    }).length;
+    return { label: MONTH_LABELS[date.getMonth()], count };
+  });
+  const maxMonthlyJobs = Math.max(1, ...monthlyJobs.map((month) => month.count));
+
+  const categoryTotals = new Map<string, number>();
+  jobs.forEach((job) => {
+    categoryTotals.set(job.category_slug, (categoryTotals.get(job.category_slug) ?? 0) + 1);
+  });
+  const categoryBreakdown = Array.from(categoryTotals.entries())
+    .map(([slug, count]) => ({
+      label: getCategoryBySlug(slug)?.name ?? slug,
+      percent: jobs.length ? Math.round((count / jobs.length) * 100) : 0,
+    }))
+    .sort((a, b) => b.percent - a.percent);
+
+  const acceptedOrCompleted = jobs.length;
+  const completed = jobs.filter((job) => job.status === "completed").length;
+  const acceptanceRate = acceptedOrCompleted ? Math.round((completed / acceptedOrCompleted) * 100) : 0;
 
   const kpis = [
-    { icon: "construction", label: "Ukupno poslova", value: "76" },
-    { icon: "star", label: "Prosječna ocjena", value: (craftsman?.rating ?? 0).toFixed(1) },
-    { icon: "task_alt", label: "Stopa prihvatanja", value: "89%" },
-    { icon: "bolt", label: "Vrijeme odgovora", value: craftsman?.responseTime ?? "—" },
+    { icon: "construction", label: "Ukupno poslova", value: String(acceptedOrCompleted) },
+    { icon: "star", label: "Prosječna ocjena", value: (demoCraftsman?.rating ?? 0).toFixed(1) },
+    { icon: "task_alt", label: "Stopa završetka", value: `${acceptanceRate}%` },
+    { icon: "bolt", label: "Vrijeme odgovora", value: demoCraftsman?.responseTime ?? "—" },
   ];
 
   return (
@@ -76,8 +101,8 @@ export default async function StatistikaPage() {
           <div className="rounded-xl bg-surface-white p-8 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
             <h2 className="mb-6 text-headline-md text-text-main">Poslovi po mjesecu</h2>
             <div className="flex h-48 items-end gap-4">
-              {monthlyJobs.map((month) => (
-                <div key={month.label} className="flex flex-1 flex-col items-center gap-2">
+              {monthlyJobs.map((month, index) => (
+                <div key={`${month.label}-${index}`} className="flex flex-1 flex-col items-center gap-2">
                   <div
                     className="w-full rounded-t-lg bg-primary/80 transition-all"
                     style={{ height: `${(month.count / maxMonthlyJobs) * 100}%` }}
@@ -91,19 +116,23 @@ export default async function StatistikaPage() {
 
           <div className="rounded-xl bg-surface-white p-8 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
             <h2 className="mb-6 text-headline-md text-text-main">Poslovi po usluzi</h2>
-            <div className="space-y-4">
-              {categoryBreakdown.map((row) => (
-                <div key={row.label}>
-                  <div className="mb-1.5 flex justify-between text-label-sm">
-                    <span className="text-text-main">{row.label}</span>
-                    <span className="font-bold text-text-muted">{row.percent}%</span>
+            {categoryBreakdown.length > 0 ? (
+              <div className="space-y-4">
+                {categoryBreakdown.map((row) => (
+                  <div key={row.label}>
+                    <div className="mb-1.5 flex justify-between text-label-sm">
+                      <span className="text-text-main">{row.label}</span>
+                      <span className="font-bold text-text-muted">{row.percent}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container">
+                      <div className="h-full rounded-full bg-primary" style={{ width: `${row.percent}%` }} />
+                    </div>
                   </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container">
-                    <div className="h-full rounded-full bg-primary" style={{ width: `${row.percent}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-body-md text-text-muted">Nema podataka još uvijek.</p>
+            )}
           </div>
         </div>
 

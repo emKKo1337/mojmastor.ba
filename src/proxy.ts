@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 /** Routes that require any signed-in, email-verified account. */
-const PROTECTED_PREFIXES = ["/nadzorna-ploca", "/panel-majstora", "/poruke"];
+const PROTECTED_PREFIXES = ["/nadzorna-ploca", "/panel-majstora", "/poruke", "/novi-zahtjev"];
 
 /** Routes only reachable by the "korisnik" role. */
 const KORISNIK_ONLY_PREFIXES = ["/nadzorna-ploca"];

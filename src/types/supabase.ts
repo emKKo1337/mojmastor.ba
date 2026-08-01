@@ -9,6 +9,7 @@
  */
 
 export type AccountRoleRow = "korisnik" | "majstor";
+export type JobRequestStatusRow = "pending" | "accepted" | "completed" | "cancelled";
 
 export interface Database {
   public: {
@@ -109,11 +110,54 @@ export interface Database {
         };
         Relationships: [];
       };
+      job_requests: {
+        Row: {
+          id: string;
+          customer_id: string;
+          craftsman_id: string | null;
+          title: string;
+          description: string;
+          category_slug: string;
+          city: string;
+          neighborhood: string;
+          budget_from: number | null;
+          budget_to: number | null;
+          preferred_date: string;
+          urgent: boolean;
+          status: JobRequestStatusRow;
+          declined_by: string[];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          customer_id: string;
+          craftsman_id?: string | null;
+          title: string;
+          description: string;
+          category_slug: string;
+          city: string;
+          neighborhood?: string;
+          budget_from?: number | null;
+          budget_to?: number | null;
+          preferred_date?: string;
+          urgent?: boolean;
+          status?: JobRequestStatusRow;
+          declined_by?: string[];
+        };
+        Update: Partial<{
+          craftsman_id: string | null;
+          status: JobRequestStatusRow;
+          declined_by: string[];
+        }>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
       account_role: AccountRoleRow;
+      job_request_status: JobRequestStatusRow;
     };
     CompositeTypes: Record<string, never>;
   };
