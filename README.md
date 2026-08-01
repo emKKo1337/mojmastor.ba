@@ -16,10 +16,26 @@ Open [http://localhost:3000](http://localhost:3000). Without Supabase credential
 The app is already wired for Supabase; it just needs a project and its credentials.
 
 1. **Create a project** at [supabase.com](https://supabase.com).
-2. **Run the migration** in `supabase/migrations/20260717120000_init_schema.sql` against your project (via the SQL Editor, or `supabase db push` if using the Supabase CLI). It creates the `profiles`, `craftsman_profiles`, `craftsman_gallery`, and `favourites` tables with Row Level Security policies, the `handle_new_user` trigger that provisions a profile on signup, and the public `craftsman-gallery` Storage bucket.
+2. **Run the migrations** in `supabase/migrations/`, in order, against your project (via the SQL Editor, or `supabase db push` if using the Supabase CLI):
+   - `20260717120000_init_schema.sql` — `profiles`, `craftsman_profiles`, `craftsman_gallery`, `favourites`, RLS policies, the `handle_new_user` trigger that provisions a profile on signup, and the public `craftsman-gallery` Storage bucket.
+   - `20260718090000_job_requests.sql` — `job_requests` (the real backend behind `/novi-zahtjev` and every job queue on both dashboards).
+   - `20260718100000_messaging.sql` — `conversations` + `messages` (the real backend behind `/poruke`).
+   - `20260718110000_public_majstor_profiles.sql` — fixes the `profiles` SELECT policy so anonymous visitors can see majstor profiles (the original policy only allowed authenticated users, which silently hid every majstor from the public marketplace).
+   - `20260718120000_admin_verification.sql` — `admin_emails` allowlist table + `set_craftsman_verified()` function backing `/admin/verifikacija`.
 3. **Copy `.env.example` to `.env.local`** and fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from Project Settings → API. Set `NEXT_PUBLIC_SITE_URL` to your deployed URL in production.
 
-That's enough to run registration, login, email verification, password reset, and the majstor profile/gallery editor end-to-end. No `SUPABASE_SERVICE_ROLE_KEY` is needed — every server-side query uses the anon key and relies on Row Level Security.
+That's enough to run registration, login, email verification, password reset, the majstor profile/gallery editor, job requests, and messaging end-to-end. No `SUPABASE_SERVICE_ROLE_KEY` is needed — every server-side query uses the anon key and relies on Row Level Security.
+
+### Admin access (majstor verification)
+
+`/admin/verifikacija` lets you mark majstori as verified. There's no admin account role — access is granted in two places that both need to agree:
+
+1. In the SQL Editor: `insert into public.admin_emails (email) values ('you@example.com');` — this is what the database actually checks before allowing the mutation.
+2. In `.env.local`: `ADMIN_EMAILS=you@example.com` — this only controls whether the app shows the page at all.
+
+### What's still on mock data
+
+The marketplace (`/pretraga`, `/kategorije/[slug]`, `/majstor/[id]`) shows real registered majstori merged alongside the original demo dataset in `src/data/craftsmen.ts`, so it never looks empty while the platform is new. Reviews, ratings, and response times aren't tied to real accounts yet — there's no reviews table — so a real majstor's profile shows 0 reviews honestly rather than an invented rating.
 
 ### Email delivery: default vs. custom SMTP
 
