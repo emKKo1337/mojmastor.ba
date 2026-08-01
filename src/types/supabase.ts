@@ -187,7 +187,12 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      set_craftsman_verified: {
+        Args: { target_profile_id: string; verified_value: boolean };
+        Returns: undefined;
+      };
+    };
     Enums: {
       account_role: AccountRoleRow;
       job_request_status: JobRequestStatusRow;
