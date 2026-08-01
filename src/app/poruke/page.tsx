@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { MessengerView } from "@/components/sections/MessengerView";
 import { customerSidebarLinks, craftsmanSidebarLinks } from "@/data/navigation";
-import { conversations } from "@/data/conversations";
+import { getConversationsForUser } from "@/lib/messaging/data";
 import { getAuthenticatedUser } from "@/lib/auth/session";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +20,8 @@ export default async function PorukePage({ searchParams }: PorukePageProps) {
   const authenticatedUser = await getAuthenticatedUser();
   if (!authenticatedUser) redirect("/prijava?redirect=/poruke");
   const { profile, craftsmanProfile } = authenticatedUser;
+
+  const conversations = await getConversationsForUser(profile.id);
 
   const { majstor } = await searchParams;
   const initialConversationId = conversations.find((c) => c.participant.id === majstor)?.id;
@@ -38,7 +40,11 @@ export default async function PorukePage({ searchParams }: PorukePageProps) {
         }}
       />
       <div className={cn("h-full flex-grow", isMajstor ? "md:ml-72" : "md:ml-64")}>
-        <MessengerView conversations={conversations} initialConversationId={initialConversationId} />
+        <MessengerView
+          conversations={conversations}
+          currentUserId={profile.id}
+          initialConversationId={initialConversationId}
+        />
       </div>
     </div>
   );

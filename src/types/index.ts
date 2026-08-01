@@ -122,7 +122,6 @@ export interface Conversation {
   lastMessage: string;
   lastMessageAt: string;
   unread: boolean;
-  messages: ChatMessage[];
 }
 
 export interface ActivityItem {

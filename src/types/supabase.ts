@@ -152,6 +152,39 @@ export interface Database {
         }>;
         Relationships: [];
       };
+      conversations: {
+        Row: {
+          id: string;
+          customer_id: string;
+          craftsman_id: string;
+          last_message_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          customer_id: string;
+          craftsman_id: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          sender_id: string;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          sender_id: string;
+          body: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

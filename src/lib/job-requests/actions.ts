@@ -71,18 +71,31 @@ export async function acceptJobRequestAction(_prevState: ActionState, formData: 
   const { supabase, userId, error: authError } = await requireUser();
   if (authError || !userId) return { status: "error", message: authError ?? "Došlo je do greške." };
 
-  const { error: updateError } = await supabase
+  const { data: job, error: updateError } = await supabase
     .from("job_requests")
     .update({ craftsman_id: userId, status: "accepted" })
     .eq("id", jobId)
     .eq("status", "pending")
-    .is("craftsman_id", null);
+    .is("craftsman_id", null)
+    .select("customer_id")
+    .single();
 
-  if (updateError) return { status: "error", message: "Nije moguće prihvatiti posao. Možda ga je već prihvatio neko drugi." };
+  if (updateError || !job) {
+    return { status: "error", message: "Nije moguće prihvatiti posao. Možda ga je već prihvatio neko drugi." };
+  }
+
+  // Opens a message thread with the customer — ignore conflicts, since a
+  // thread may already exist from a previous job with the same customer.
+  await supabase
+    .from("conversations")
+    .insert({ customer_id: job.customer_id, craftsman_id: userId })
+    .select()
+    .maybeSingle();
 
   revalidatePath("/panel-majstora/novi-poslovi");
   revalidatePath("/panel-majstora/aktivni-poslovi");
   revalidatePath("/nadzorna-ploca/zahtjevi");
+  revalidatePath("/poruke");
   return { status: "success", message: "Posao je prihvaćen." };
 }
 
