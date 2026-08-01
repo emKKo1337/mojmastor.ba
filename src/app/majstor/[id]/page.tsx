@@ -18,6 +18,7 @@ import { craftsmen, getCraftsmanById } from "@/data/craftsmen";
 import { getReviewsForCraftsman } from "@/data/reviews";
 import { getAuthenticatedUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { getRealCraftsmanById, getRealCraftsmen } from "@/lib/marketplace/craftsmen";
 
 interface MajstorPageProps {
   params: Promise<{ id: string }>;
@@ -29,7 +30,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: MajstorPageProps): Promise<Metadata> {
   const { id } = await params;
-  const craftsman = getCraftsmanById(id);
+  const craftsman = getCraftsmanById(id) ?? (await getRealCraftsmanById(id));
   if (!craftsman) return {};
 
   return {
@@ -40,12 +41,13 @@ export async function generateMetadata({ params }: MajstorPageProps): Promise<Me
 
 export default async function MajstorPage({ params }: MajstorPageProps) {
   const { id } = await params;
-  const craftsman = getCraftsmanById(id);
+  const craftsman = getCraftsmanById(id) ?? (await getRealCraftsmanById(id));
   if (!craftsman) notFound();
 
   const reviews = getReviewsForCraftsman(craftsman.id);
   const coverSrc = craftsman.gallery[0]?.src;
-  const similarCraftsmen = craftsmen
+  const realCraftsmen = await getRealCraftsmen();
+  const similarCraftsmen = [...realCraftsmen, ...craftsmen]
     .filter(
       (other) =>
         other.id !== craftsman.id && other.categorySlugs.some((slug) => craftsman.categorySlugs.includes(slug)),
@@ -139,17 +141,19 @@ export default async function MajstorPage({ params }: MajstorPageProps) {
         <div className="grid grid-cols-1 gap-gutter lg:grid-cols-3">
           <div className="flex flex-col gap-gutter lg:col-span-2">
             {/* About */}
-            <div className="rounded-3xl bg-surface-white p-8 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
-              <h2 className="mb-6 flex items-center gap-2 text-headline-md">
-                <MaterialIcon name="description" className="text-primary" />
-                O majstoru
-              </h2>
-              <div className="space-y-4 text-body-md text-text-muted">
-                {craftsman.bio.map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
+            {craftsman.bio.length > 0 ? (
+              <div className="rounded-3xl bg-surface-white p-8 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+                <h2 className="mb-6 flex items-center gap-2 text-headline-md">
+                  <MaterialIcon name="description" className="text-primary" />
+                  O majstoru
+                </h2>
+                <div className="space-y-4 text-body-md text-text-muted">
+                  {craftsman.bio.map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : null}
 
             {/* Services */}
             {craftsman.skills.length > 0 ? (

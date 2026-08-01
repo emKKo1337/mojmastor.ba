@@ -9,6 +9,7 @@ import { BecomeCraftsmanCta } from "@/components/sections/BecomeCraftsmanCta";
 import { categories, getCategoryBySlug } from "@/data/categories";
 import { craftsmen } from "@/data/craftsmen";
 import { cities } from "@/data/cities";
+import { getRealCraftsmen } from "@/lib/marketplace/craftsmen";
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
@@ -34,7 +35,10 @@ export default async function CategoryListingPage({ params }: CategoryPageProps)
   const category = getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const categoryCraftsmen = craftsmen.filter((craftsman) => craftsman.categorySlugs.includes(category.slug));
+  const realCraftsmen = await getRealCraftsmen();
+  const categoryCraftsmen = [...realCraftsmen, ...craftsmen].filter((craftsman) =>
+    craftsman.categorySlugs.includes(category.slug),
+  );
 
   return (
     <>

@@ -5,6 +5,7 @@ import { MessengerView } from "@/components/sections/MessengerView";
 import { customerSidebarLinks, craftsmanSidebarLinks } from "@/data/navigation";
 import { getConversationsForUser } from "@/lib/messaging/data";
 import { getAuthenticatedUser } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -21,10 +22,34 @@ export default async function PorukePage({ searchParams }: PorukePageProps) {
   if (!authenticatedUser) redirect("/prijava?redirect=/poruke");
   const { profile, craftsmanProfile } = authenticatedUser;
 
-  const conversations = await getConversationsForUser(profile.id);
+  let conversations = await getConversationsForUser(profile.id);
 
   const { majstor } = await searchParams;
-  const initialConversationId = conversations.find((c) => c.participant.id === majstor)?.id;
+  let initialConversationId = conversations.find((c) => c.participant.id === majstor)?.id;
+
+  // Starting a chat directly from a real majstor's public profile, before
+  // any job request exists between them yet.
+  if (majstor && !initialConversationId && profile.role === "korisnik") {
+    const supabase = await createClient();
+    const { data: targetIsMajstor } = await supabase
+      .from("craftsman_profiles")
+      .select("profile_id")
+      .eq("profile_id", majstor)
+      .maybeSingle();
+
+    if (targetIsMajstor) {
+      const { data: created } = await supabase
+        .from("conversations")
+        .insert({ customer_id: profile.id, craftsman_id: majstor })
+        .select("id")
+        .maybeSingle();
+
+      if (created) {
+        conversations = await getConversationsForUser(profile.id);
+        initialConversationId = created.id;
+      }
+    }
+  }
 
   const isMajstor = profile.role === "majstor";
 

@@ -4,6 +4,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SearchResults } from "@/components/sections/SearchResults";
 import { craftsmen } from "@/data/craftsmen";
 import { getCategoryBySlug } from "@/data/categories";
+import { getRealCraftsmen } from "@/lib/marketplace/craftsmen";
 
 export const metadata: Metadata = {
   title: "Rezultati pretrage",
@@ -19,9 +20,11 @@ export default async function PretragaPage({ searchParams }: PretragaPageProps) 
   const category = params.kategorija ? getCategoryBySlug(params.kategorija) : undefined;
   const locationLabel = params.grad?.trim() || "Sarajevu";
 
+  const realCraftsmen = await getRealCraftsmen();
+  const allCraftsmen = [...realCraftsmen, ...craftsmen];
   const results = category
-    ? craftsmen.filter((craftsman) => craftsman.categorySlugs.includes(category.slug))
-    : craftsmen;
+    ? allCraftsmen.filter((craftsman) => craftsman.categorySlugs.includes(category.slug))
+    : allCraftsmen;
 
   return (
     <>
